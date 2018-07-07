@@ -21,7 +21,6 @@ public class ButtonClick : MonoBehaviour {
 
     private void OnMouseDown()
     {
-        Debug.Log("lol");
         var result = door.ToggleDoor();
         animator.SetBool("active", result);
     }
