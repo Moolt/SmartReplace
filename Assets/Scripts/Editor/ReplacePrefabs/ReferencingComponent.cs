@@ -3,6 +3,9 @@ using UnityEngine;
 
 namespace ReplacePrefab
 {
+    /// <summary>
+    /// Will restore a reference to a component on a replaced object
+    /// </summary>
     public class ReferencingComponent : ExternalReference
     {
         public Type ReferencedComponentType;

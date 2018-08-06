@@ -2,6 +2,9 @@
 
 namespace ReplacePrefab
 {
+    /// <summary>
+    /// Represents all settings made by the user on the UI at a specific point of time
+    /// </summary>
     public struct WindowValuesChangeSnapshop
     {
         public GameObject FreshPrefab;

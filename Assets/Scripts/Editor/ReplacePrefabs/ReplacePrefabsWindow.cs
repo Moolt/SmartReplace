@@ -9,27 +9,27 @@ namespace ReplacePrefab
 {
     public class ReplacePrefabsWindow : EditorWindow
     {
-        public GameObject brokenPrefab;
-        public GameObject freshPrefab;
-        public bool keepReferencesToOldPrefab = true;
+        public GameObject brokenPrefab; //Object that should be replaced
+        public GameObject freshPrefab; //Prefab that should replace brokenPrefab
+        public bool keepReferencesToOldPrefab = true; //Always true
 
-        private List<TransferableType> componentIntersection = new List<TransferableType>();
-        private Vector2 scrollPosition;
+        private List<TransferableType> componentIntersection = new List<TransferableType>(); //List of all components, the brokenPrefab and freshPrefab have in common
+        private Vector2 scrollPosition; //UI
 
-        private List<SimilarGameObject> similarObjects = new List<SimilarGameObject>();
-        private List<ReferencingComponent> referencingComponents = new List<ReferencingComponent>();
-        private List<ReferencedObject> referencedObjects = new List<ReferencedObject>();
-        private Dictionary<int, GameObject> replacementHistory = new Dictionary<int, GameObject>();
+        private List<SimilarGameObject> similarObjects = new List<SimilarGameObject>(); //List of objects with similar names / components to the brokenPrefab
+        private List<ReferencingComponent> referencingComponents = new List<ReferencingComponent>(); //Components with references to any of the objects to be replaced
+        private List<ReferencedObject> referencedObjects = new List<ReferencedObject>(); //References from objects in the scene to objects being replaced
+        private Dictionary<int, GameObject> replacementHistory = new Dictionary<int, GameObject>(); //Mapping from old object id's to the new object instances
 
         public delegate List<T> GetHierarchyFor<T>(GameObject target);
 
         private WindowValuesChangeManager uiChangeManager = new WindowValuesChangeManager();
 
-        private bool showHandles = true;
+        private bool showHandles = true; //Always true, activates scene handles
         private bool showSimilarObjects = true;
         private bool searchForSimilarObjects = false;
         private bool showComponentComparisons = true;
-        private bool searchChilren = false;
+        private bool searchChildren = false; //Always false
         private bool searchByName = false;
         private bool searchByComponents = false;
         private bool enableMultiScene = false;
@@ -44,7 +44,7 @@ namespace ReplacePrefab
 
         private readonly int indentation = 15;
 
-        [MenuItem("Window/Replace Prefab...")]
+        [MenuItem("Tools/Replace Prefab...")]
         static void Init()
         {
             ReplacePrefabsWindow editor = (ReplacePrefabsWindow)EditorWindow.GetWindow(typeof(ReplacePrefabsWindow));
@@ -69,6 +69,7 @@ namespace ReplacePrefab
             SceneView.onSceneGUIDelegate -= OnSceneGUI;
         }
 
+        //Draws the UI
         void OnGUI()
         {
             EditorGUI.BeginChangeCheck();
@@ -210,7 +211,7 @@ namespace ReplacePrefab
 
             OnPropertiesChanged();
         }
-
+        
         private bool ShowToogleWithIndentation(bool inputValue, string text, int customIndentation)
         {
             EditorGUILayout.BeginHorizontal();
@@ -223,6 +224,7 @@ namespace ReplacePrefab
             return inputValue;
         }
 
+        //Draw handles to visualize replacement candidates
         protected void OnSceneGUI(SceneView sceneView)
         {
             if (brokenPrefab == null || !showHandles) return;
@@ -240,6 +242,8 @@ namespace ReplacePrefab
         }
         #endregion
 
+        //Will compare the components of brokenPrefab with the ones on freshPrefab
+        //Every intersecting component will be encapsulated as TransferableType and stored in a list
         private void CompareObjects()
         {
             List<Component> oldComponents = GameObjectHelper.GetComponentsInAllChildren<Component>(brokenPrefab);
@@ -251,12 +255,14 @@ namespace ReplacePrefab
             componentIntersection.ForEach(c => ObtainFields(c));
         }
 
+        //Will search for all fields on a component, encapsulate them in a TransferableField instance and return them as list
         private void ObtainFields(TransferableType transferableType)
         {
             var fields = GetFieldsForType(transferableType.ComponentType);
             transferableType.Fields = fields.Select(f => new TransferableField() { Field = f, IsActivated = true }).ToList();
         }
 
+        //Find all fields (variables) of a specific type and returns their fieldInfo as a list
         private List<FieldInfo> GetFieldsForType(Type type)
         {
             var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Default | BindingFlags.DeclaredOnly | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy).ToList();
@@ -275,6 +281,8 @@ namespace ReplacePrefab
             return fields;
         }
 
+        //Called by the replace button
+        //Will execute the replacement for the brokenPrefab and all similar objects, if wanted by the user
         private void ReplaceAll()
         {
             isRunning = true;
@@ -290,18 +298,22 @@ namespace ReplacePrefab
             hasErrorOccurred = false;
         }
 
+        //Replaces a single instance of a given object
         private void Replace(GameObject oldObject)
         {
+            //Instantiate new prefab
             var newlyCreatedPrefab = PrefabUtility.InstantiatePrefab(freshPrefab, oldObject.scene) as GameObject;
+            //Apply old transformation
             if (transferTransform) ApplyTransformation(oldObject, newlyCreatedPrefab);
             TransferComponentValues(oldObject, newlyCreatedPrefab);
             newlyCreatedPrefab.name = oldObject.name;
+            //Needed to invalidate the scene
             Undo.RecordObject(oldObject, "Replace object");
-
+            //Create a lookup table for the old and new instance
             MakeHistory(oldObject, newlyCreatedPrefab);
-
+            
             DestroyImmediate(oldObject);
-
+            //Cleanup
             if (oldObject == brokenPrefab)
             {
                 brokenPrefab = null;
@@ -312,6 +324,7 @@ namespace ReplacePrefab
             }
         }
 
+        //Creates a lookup table with the old objects id being the key and the new instance being the value
         private void MakeHistory(GameObject oldObject, GameObject newObject)
         {
             var idHierarchy = GameObjectHelper.GetAllChildrenOf(oldObject, true).Select(go => go.GetInstanceID()).ToList();
@@ -326,11 +339,13 @@ namespace ReplacePrefab
             if (transferScale) newlyCreatedPrefab.transform.localScale = targetTransform.localScale;
         }
 
+        //Transfers all selected components from the component intersection from the old to the new instance
         private void TransferComponentValues(GameObject oldObject, GameObject newlyCreatedPrefab)
         {
             componentIntersection.Where(v => v.IsActivated).ToList().ForEach(c => TransferSingleComponent(c, oldObject, newlyCreatedPrefab));
         }
 
+        //Transfers all selected values from an old object's component to the corresponding new component
         private void TransferSingleComponent(TransferableType type, GameObject oldObject, GameObject newlyCreatedPrefab)
         {
             Component oldComponent = GameObjectHelper.GetComponentInAllChildren(oldObject, type.ComponentType);
@@ -346,10 +361,12 @@ namespace ReplacePrefab
             }
         }
 
+        //Comparison only possible, if old and new prefab are known
         private bool CanCompare => brokenPrefab != null && freshPrefab != null;
-
+        
         private bool CanReplace => CanCompare && componentIntersection.Count > 0;
 
+        //Searches for objects in the scene with similar names or components to the brokenPrefab
         private void FindSimilarObjects()
         {
             if (!CanCompare)
@@ -361,7 +378,8 @@ namespace ReplacePrefab
             var allObjects = FindAllObjects();
             allObjects.Remove(brokenPrefab);
 
-            if (!searchChilren)
+            //Remove child objects from the list
+            if (!searchChildren)
             {
                 allObjects.RemoveAll(o => o.transform.parent != null);
             }
@@ -374,16 +392,19 @@ namespace ReplacePrefab
             {
                 FindSimilarObjectsByComponents(allObjects);
             }
-
+            //Store the objects in a list to show them in the UI
+            //GameObject will also be wrapped inside of a SimilarGameObject to store whether it's been selected in the UI
             similarObjects = allObjects.Select(ro => new SimilarGameObject() { SimilarObject = ro, IsActivated = true }).ToList();
         }
 
+        //Removes objects from the list, that do not have similar names to brokenPrefab
         private void FindSimilarObjectsByName(List<GameObject> objectsToBeFiltered)
         {
             List<string> separatedNames = GameObjectNameFragments(brokenPrefab.name, freshPrefab.name);
             objectsToBeFiltered.RemoveAll(o => !separatedNames.Any(n => o.name.Contains(n)));
         }
 
+        //Removes objects from the list, that do not share at lease one common component with brokenPrefab
         private void FindSimilarObjectsByComponents(List<GameObject> objectsToBeFiltered)
         {
             if (componentIntersection.Count == 0)
@@ -408,6 +429,7 @@ namespace ReplacePrefab
             objectsToBeFiltered.RemoveAll(o => objectsToRemove.Contains(o));
         }
 
+        //Used by FindSimilarObjectsByName to separate a name into separate, comparable fragments
         private List<string> GameObjectNameFragments(params string[] names)
         {
             var parsedNames = new List<string>();
@@ -424,6 +446,8 @@ namespace ReplacePrefab
         }
 
         #region External References
+        //Searches all components in the scene for references onto the object being replaced
+        //All references will be saved and restored after replacement
         private void FindExternalReferences()
         {
             var allObjectsInScene = FindAllObjects();
@@ -432,13 +456,18 @@ namespace ReplacePrefab
             var componentToFieldsMapping = new Dictionary<Type, List<FieldInfo>>();
             allComponentsInScene.Select(c => c.GetType()).Distinct().ToList().ForEach(t => componentToFieldsMapping.Add(t, GetFieldsForType(t)));
 
+            //All objects that may potentially be referenced by other objects
             var targetObjects = new List<GameObject>();
             targetObjects.Add(brokenPrefab);
             targetObjects.AddRange(similarObjects.Where(s => s.IsActivated).Select(s => s.SimilarObject));
 
+            //Stores the children (value) of a gameObject (key) as list
+            //Is a lookup table filled by the FindByReferencesOn function to save some processing time
             var objectHierarchyMapping = new Dictionary<GameObject, List<GameObject>>();
+            //Stores the components (value) of a gameObject (key) as list
             var componentHierarchyMapping = new Dictionary<GameObject, List<Component>>();
 
+            //Iterate through every variable of every component in the scene to check whether they may be referencing one of the replaced objects
             foreach (Component potentiallyTargetingComponent in allComponentsInScene)
             {
                 foreach (FieldInfo potentialReference in componentToFieldsMapping[potentiallyTargetingComponent.GetType()])
@@ -475,9 +504,13 @@ namespace ReplacePrefab
             }
         }
 
+        //Will look at a variable of a given component an checks, whether it references a GameObject or Component present in the hierarchyMapping
+        //Stores any found references
         private void FindReferencesOn<T>(FindReferenceBaseParameter param, Dictionary<GameObject, List<T>> hierarchyMapping, GetHierarchyFor<T> getHierarchyFor)
         {
             List<T> hierarchyAsList;
+            //Current value of the component's variable
+            //May be a list. For simplicity, a list is always assumed
             var value = GetValueAsListFor<T>(param.ComponentWithReference, param.ReferenceOnTarget, param.IsList);
 
             foreach (GameObject targetObject in param.TargetObjects)
@@ -503,6 +536,8 @@ namespace ReplacePrefab
             }
         }
 
+        //Returns the value of a component's variable as a list
+        //Non enumerable types, arrays and lists will all be returned as a list of T
         private List<T> GetValueAsListFor<T>(Component source, FieldInfo field, bool isList)
         {
             List<T> results = new List<T>();
@@ -545,6 +580,7 @@ namespace ReplacePrefab
             return results;
         }
 
+        //Stores a reference to a replaced object for later update
         private void StoreReferenceForObject(GameObject referencedObject, Component referencingComponent, FieldInfo referencingField, GameObject value, bool isList, int index)
         {
             referencedObjects.Add(new ReferencedObject((o) => replacementHistory[o])
@@ -559,6 +595,7 @@ namespace ReplacePrefab
             });
         }
 
+        //Stores a reference to a replaced component for later update
         private void StoreReferenceForComponent(GameObject referencedObject, Component referencingComponent, FieldInfo referencingField, Component value, bool isList, int index)
         {
             referencingComponents.Add(new ReferencingComponent((o) => replacementHistory[o])
@@ -574,6 +611,7 @@ namespace ReplacePrefab
             });
         }
 
+        //Updates all references, so that all replaced objects will now be referenced
         private void RestoreExternalReferences()
         {
             referencedObjects.ForEach(ro => ro.UpdateReference());
@@ -582,6 +620,7 @@ namespace ReplacePrefab
 
         #endregion
 
+        //Clears all temporary lists and prepares the window for further use
         private void CleanUp()
         {
             referencedObjects.Clear();
@@ -592,10 +631,12 @@ namespace ReplacePrefab
             searchForSimilarObjects = false;
         }
 
+        //Updates the UI when changes have been made
         private void OnPropertiesChanged()
         {
             var changes = UiChanges;
 
+            //Show error, when a prefab is dropped in the brokenPrefab section
             if(brokenPrefab != null && !IsSceneObject(brokenPrefab))
             {
                 Debug.LogError("The destination object has to be an object from the scene and cannot be a prefab.");
@@ -603,6 +644,7 @@ namespace ReplacePrefab
                 return;
             }
 
+            //Clear similar objects list if brokenPrefab or freshPrefab are null
             if (!CanCompare)
             {
                 similarObjects.Clear();
@@ -644,10 +686,13 @@ namespace ReplacePrefab
             }
         }
 
-        private bool IsSceneObject(GameObject gameObject) => gameObject != null && gameObject.scene != null && gameObject.scene.name != null;
+        //True if the given object is not null and inside of any scene
+        private bool IsSceneObject(GameObject gameObject) => gameObject != null && gameObject.scene.name != null;
 
+        //Returns a summary of all changes made by the user, so the UI can react accordingly
         private WindowValuesChangeSummary UiChanges => uiChangeManager.UpdateSnapshot(freshPrefab, brokenPrefab, searchForSimilarObjects, searchByName, searchByComponents, enableMultiScene);
 
+        //True if type is an enumerable of T
         private bool IsListOf<T>(Type type)
         {
             foreach (Type interfaceType in type.GetInterfaces())
@@ -663,6 +708,8 @@ namespace ReplacePrefab
             return false;
         }
 
+        //Will return a list of all objects present in the scene view
+        //Will remove objects that are not in the same scene as brokenPrefab if enableMultiScene is disabled
         private List<GameObject> FindAllObjects()
         {
             var allObjects = GameObject.FindObjectsOfType<GameObject>().ToList();

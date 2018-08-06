@@ -4,6 +4,10 @@ using UnityEngine;
 
 namespace ReplacePrefab
 {
+    /// <summary>
+    /// Used for the search of external references and stores common information needed for references on
+    /// GameObject, Component, List<GameObject>, List<Component> etc.
+    /// </summary>
     public struct FindReferenceBaseParameter
     {
         public List<GameObject> TargetObjects;

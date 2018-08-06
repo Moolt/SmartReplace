@@ -2,6 +2,9 @@
 
 namespace ReplacePrefab
 {
+    /// <summary>
+    /// Manages snapshots of the UI and outputs a summary of all changes that were made
+    /// </summary>
     public class WindowValuesChangeManager
     {
         private WindowValuesChangeSummary changes;

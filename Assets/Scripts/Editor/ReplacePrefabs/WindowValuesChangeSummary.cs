@@ -1,5 +1,8 @@
 ﻿namespace ReplacePrefab
 {
+    /// <summary>
+    /// Summarizes any changes made by the user on the UI by comparing two snapshots
+    /// </summary>
     public class WindowValuesChangeSummary
     {
         public bool ShowSimilarObjectsChanged = false;
