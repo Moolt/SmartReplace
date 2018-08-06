@@ -6,7 +6,7 @@ Smart replace is a Unity plug-in that helps you to restore broken prefab links. 
 In order to use the plugin the corrent .NET version is required to be set for your project. **Otherwise it will not compile**.
 You can change the .NET version via: ```File -> Build settings -> Other settings -> Configuration -> Scripting Runtime Version -> .NET 4.x Equivalent```
 
-## SetupSetup
+## Setup
 After downloading and installing the package you can open the Smart Replace window by navigating to ``Tools -> Replace prefab...`` .
 
 ## Usage
