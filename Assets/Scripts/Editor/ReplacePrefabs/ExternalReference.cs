@@ -21,12 +21,15 @@ namespace ReplacePrefab
         public int ReferencedObjectID;
         public int SourceObjectID;
 
-        public Component ReferencingComponentInstance {
-            set {
+        public Component ReferencingComponentInstance
+        {
+            set
+            {
                 referencingComponent = value;
                 referencingComponentType = referencingComponent.GetType();
             }
-            get {
+            get
+            {
                 //Gameobject with referencing component might itself have been replaced
                 if (referencingComponent == null || referencingComponent.gameObject == null)
                 {
@@ -52,6 +55,7 @@ namespace ReplacePrefab
                 else
                 {
                     var list = field.GetValue(source);
+                    var count = (int)fieldType.GetProperty("Count").GetValue(list);
                     var propertyItemInfo = fieldType.GetProperty("Item");
 
                     propertyItemInfo.SetValue(list, value, new object[] { index });
@@ -59,8 +63,19 @@ namespace ReplacePrefab
             }
             else
             {
-                field.SetValue(source, value);
+                try
+                {
+                    field.SetValue(source, value);                    
+                }
+                catch (Exception e)
+                {
+
+                    Debug.LogError(e.Message);
+                    Debug.LogError($"Failed to set value {value}");
+                }
             }
+            //Set dirty so the value doesn't get lost on play
+            EditorUtility.SetDirty(source);
         }
 
         public FieldInfo ReferencingFieldInSource;
@@ -72,7 +87,7 @@ namespace ReplacePrefab
 
         public virtual void UpdateReference()
         {
-            Undo.RecordObject(ReferencingComponentInstance, "Updating external references");
+            //Undo.RecordObject(ReferencingComponentInstance, "Updating external references");
         }
 
         public ExternalReference(GetReplacementFor getReplacementFor)
