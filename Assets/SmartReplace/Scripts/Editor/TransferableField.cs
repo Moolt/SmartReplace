@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace ReplacePrefab
+namespace SmartReplace.Scripts.Editor
 {
     /// <summary>
     /// Encapsulates a component's field

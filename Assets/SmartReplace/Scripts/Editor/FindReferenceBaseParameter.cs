@@ -2,7 +2,7 @@
 using System.Reflection;
 using UnityEngine;
 
-namespace ReplacePrefab
+namespace SmartReplace.Scripts.Editor
 {
     /// <summary>
     /// Used for the search of external references and stores common information needed for references on

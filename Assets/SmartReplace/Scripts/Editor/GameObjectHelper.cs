@@ -3,20 +3,20 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace ReplacePrefab
+namespace SmartReplace.Scripts.Editor
 {
     /// <summary>
     /// Some helper functions for working with GameObjects
     /// </summary>
     public static class GameObjectHelper
     {
-        //Returns a flattened child hierarchy for the given object, including the parent
+        // Returns a flattened child hierarchy for the given object, including the parent
         public static List<GameObject> ObjectHierarchyFor(GameObject target)
         {
             return GetAllChildrenOf(target, true);
         }
 
-        //Returns a flattened component hierarchy for the given object
+        // Returns a flattened component hierarchy for the given object
         public static List<Component> ComponentHierarchyFor(GameObject target)
         {
             return GetComponentsInAllChildren<Component>(target);
@@ -79,19 +79,13 @@ namespace ReplacePrefab
         {
             if (list.Any(c => c == null))
             {
-                Debug.LogWarning(string.Format("Replace prefab warning: {0} contains missing scripts.", parent.name));
+                Debug.LogWarning($"Replace prefab warning: {parent.name} contains missing scripts.");
             }
 
             list.RemoveAll(c => c == null);
         }
 
-        //Returns a the first instance of a component of the given type
-        public static T GetComponentInAllChildren<T>(GameObject gameObject)
-        {
-            return GetComponentsInAllChildren<T>(gameObject).FirstOrDefault();
-        }
-
-        //Returns a the first instance of a component of the given type
+        // Returns a the first instance of a component of the given type
         public static Component GetComponentInAllChildren(GameObject gameObject, Type type)
         {
             return GetComponentsInAllChildren(gameObject, type).FirstOrDefault();

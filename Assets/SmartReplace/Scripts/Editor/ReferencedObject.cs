@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace ReplacePrefab
+﻿namespace SmartReplace.Scripts.Editor
 {
     /// <summary>
     /// Will restore a reference to a replaced object
@@ -14,8 +12,8 @@ namespace ReplacePrefab
         public override void UpdateReference()
         {
             base.UpdateReference();
-            //Value will always be the parent object
-            SetValueFor<GameObject>(ReferencingComponentInstance, ReferencingFieldInSource, ReferencedObject, IsList, IndexInList);
+            // Value will always be the parent object
+            SetValueFor(ReferencingComponentInstance, ReferencingFieldInSource, ReferencedObject, IsList, IndexInList);
         }
     }
 }

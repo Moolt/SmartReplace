@@ -1,7 +1,6 @@
 ﻿using System;
-using UnityEngine;
 
-namespace ReplacePrefab
+namespace SmartReplace.Scripts.Editor
 {
     /// <summary>
     /// Will restore a reference to a component on a replaced object
@@ -18,7 +17,7 @@ namespace ReplacePrefab
         {
             base.UpdateReference();
             var referencedComponent = GameObjectHelper.GetComponentInAllChildren(ReferencedObject, ReferencedComponentType);
-            SetValueFor<Component>(ReferencingComponentInstance, ReferencingFieldInSource, referencedComponent, IsList, IndexInList);
+            SetValueFor(ReferencingComponentInstance, ReferencingFieldInSource, referencedComponent, IsList, IndexInList);
         }
     }
 }

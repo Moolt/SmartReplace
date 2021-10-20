@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ReplacePrefab
+namespace SmartReplace.Scripts.Editor
 {
     /// <summary>
     /// A component with transferable values.

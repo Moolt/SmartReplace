@@ -3,16 +3,17 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace ReplacePrefab
+namespace SmartReplace.Scripts.Editor
 {
     /// <summary>
     /// Encapsulates a variable of a component referencing the object being replaced.
     /// Will be executed after replacement to update the reference to the replaced object / component.
     /// </summary>
     public abstract class ExternalReference
-    {        
+    {
         public delegate GameObject GetReplacementFor(int objectID);
-        private GetReplacementFor GetInstance; //Returns the replaced object that previously had the given id
+
+        private readonly GetReplacementFor GetInstance; //Returns the replaced object that previously had the given id
         private Component referencingComponent; //The component that stores a reference to the object being replaced
         private Type referencingComponentType;
 
@@ -30,17 +31,19 @@ namespace ReplacePrefab
             }
             get
             {
-                //Gameobject with referencing component might itself have been replaced
+                // Gameobject with referencing component might itself have been replaced
                 if (referencingComponent == null || referencingComponent.gameObject == null)
                 {
                     var sourceObject = GetInstance(SourceObjectID);
-                    referencingComponent = GameObjectHelper.GetComponentInAllChildren(sourceObject, referencingComponentType);
+                    referencingComponent =
+                        GameObjectHelper.GetComponentInAllChildren(sourceObject, referencingComponentType);
                 }
+
                 return referencingComponent;
             }
         }
 
-        //Writes a value into a component's field
+        // Writes a value into a component's field
         protected void SetValueFor<T>(Component source, FieldInfo field, T value, bool isList, int index)
         {
             if (isList)
@@ -65,16 +68,16 @@ namespace ReplacePrefab
             {
                 try
                 {
-                    field.SetValue(source, value);                    
+                    field.SetValue(source, value);
                 }
                 catch (Exception e)
                 {
-
                     Debug.LogError(e.Message);
                     Debug.LogError($"Failed to set value {value}");
                 }
             }
-            //Set dirty so the value doesn't get lost on play
+
+            // Set dirty so the value doesn't get lost on play
             EditorUtility.SetDirty(source);
         }
 

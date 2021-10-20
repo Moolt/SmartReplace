@@ -1,27 +1,33 @@
 ﻿using UnityEngine;
 
-namespace ReplacePrefab
+namespace SmartReplace.Scripts.Editor
 {
     /// <summary>
     /// Represents all settings made by the user on the UI at a specific point of time
     /// </summary>
-    public struct WindowValuesChangeSnapshop
+    public struct WindowValuesChangeSnapshot
     {
         public GameObject FreshPrefab;
         public GameObject BrokenPrefab;
         public bool ShowSimilarObjects;
         public bool SearchByName;
         public bool SearchByComponents;
-        public bool EnableMultiscene;
+        public bool EnableMultiScene;
 
-        public WindowValuesChangeSnapshop Update(GameObject freshPrefab, GameObject brokenPrefab, bool showSimilar, bool byName, bool byComponents, bool multiscene)
+        public WindowValuesChangeSnapshot Update(
+            GameObject freshPrefab, 
+            GameObject brokenPrefab, 
+            bool showSimilar,
+            bool byName, 
+            bool byComponents, 
+            bool multiScene)
         {
             FreshPrefab = freshPrefab;
             BrokenPrefab = brokenPrefab;
             ShowSimilarObjects = showSimilar;
             SearchByName = byName;
             SearchByComponents = byComponents;
-            EnableMultiscene = multiscene;
+            EnableMultiScene = multiScene;
             return this;
         }
     }
